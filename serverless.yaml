@@ -1,0 +1,41 @@
+functions:
+  main:
+    handler: src/lambda.handler
+    events:
+      - http:
+          method: any
+          path: /{any+}
+          cors: true
+
+  queue:
+    handler: src/queue.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - General
+              - Arn
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - Notification
+              - Arn
+provider:
+  # .. your provider params ..
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "sqsService:SendMessage"
+          Resource: arn:aws:sqs:*:*:*
+resources:
+  Resources:
+    General:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "General-${self:provider.stage}"
+    Notification:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "Notification-${self:provider.stage}"
